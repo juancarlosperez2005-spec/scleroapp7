@@ -6,11 +6,11 @@ import { HospitalSelector } from '../components/HospitalSelector';
 import { format } from 'date-fns';
 
 function clasificar(s, d) {
-  if (s < 90 || d < 60) return { label: 'Baja', cls: 'badge-teal', color: 'var(--teal-300)' };
-  if (s < 120 && d < 80) return { label: 'Normal', cls: 'badge-green', color: 'var(--teal-500)' };
-  if (s < 130 && d < 80) return { label: 'Elevada', cls: 'badge-amber', color: '#f59e0b' };
-  if (s < 140 || (d >= 80 && d < 90)) return { label: 'Alta I', cls: 'badge-amber', color: '#f97316' };
-  return { label: 'Alta II', cls: 'badge-red', color: '#dc2626' };
+  if (s < 90 || d < 60) return { label: 'Baja', color: 'var(--teal-300)' };
+  if (s < 120 && d < 80) return { label: 'Normal', color: 'var(--teal-500)' };
+  if (s < 130 && d < 80) return { label: 'Elevada', color: '#f59e0b' };
+  if (s < 140 || (d >= 80 && d < 90)) return { label: 'Alta I', color: '#f97316' };
+  return { label: 'Alta II', color: '#dc2626' };
 }
 
 function LeyendaRangos() {
@@ -22,7 +22,7 @@ function LeyendaRangos() {
     { label: 'Alta II', rango: '≥ 140 / ≥ 90 mmHg', color: '#dc2626', desc: 'Hipertensión grado 2' },
   ];
   return (
-    <div style={{ background: 'white', borderRadius: 14, border: '1px solid var(--teal-100)', padding: '14px 16px', marginBottom: 4 }}>
+    <div style={{ background: 'white', borderRadius: 14, border: '1px solid var(--teal-100)', padding: '14px 16px' }}>
       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal-700)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Guía de rangos tensionales</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {rangos.map(r => (
@@ -45,13 +45,16 @@ function LeyendaRangos() {
   );
 }
 
+const MOMENTOS = ['Mañana', 'Tarde', 'Noche'];
+const FORM_VACIO = { sistolica: '', diastolica: '', frecuencia_cardiaca: '', momento: '', lugar: '', notas: '' };
+
 export default function Tension() {
   const { user } = useAuth();
   const [registros, setRegistros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [form, setForm] = useState({ sistolica: '', diastolica: '', frecuencia_cardiaca: '', momento: '', lugar: '', notas: '' });
+  const [form, setForm] = useState(FORM_VACIO);
 
   async function cargarRegistros() {
     try {
@@ -79,7 +82,7 @@ export default function Tension() {
       fecha: format(new Date(), 'yyyy-MM-dd'),
       hora: format(new Date(), 'HH:mm'),
     });
-    setForm({ sistolica: '', diastolica: '', frecuencia_cardiaca: '', momento: '', lugar: '', notas: '' });
+    setForm(FORM_VACIO);
     setMostrarForm(false);
     setGuardando(false);
     cargarRegistros();
@@ -90,8 +93,6 @@ export default function Tension() {
     await deleteDoc(doc(db, 'tension', id));
     cargarRegistros();
   }
-
-  const MOMENTOS = ['Mañana', 'Tarde', 'Noche'];
 
   return (
     <div style={{ paddingBottom: 100 }}>
@@ -113,15 +114,21 @@ export default function Tension() {
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 12, color: 'var(--slate-400)', display: 'block', marginBottom: 5 }}>Sistólica</label>
-                <input className="input-field" type="number" value={form.sistolica} onChange={e => setForm({ ...form, sistolica: e.target.value })} placeholder="120" required min="60" max="250" />
+                <input className="input-field" type="number" value={form.sistolica}
+                  onChange={e => setForm(f => ({ ...f, sistolica: e.target.value }))}
+                  placeholder="120" required min="60" max="250" />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 12, color: 'var(--slate-400)', display: 'block', marginBottom: 5 }}>Diastólica</label>
-                <input className="input-field" type="number" value={form.diastolica} onChange={e => setForm({ ...form, diastolica: e.target.value })} placeholder="80" required min="40" max="150" />
+                <input className="input-field" type="number" value={form.diastolica}
+                  onChange={e => setForm(f => ({ ...f, diastolica: e.target.value }))}
+                  placeholder="80" required min="40" max="150" />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 12, color: 'var(--slate-400)', display: 'block', marginBottom: 5 }}>F. Card.</label>
-                <input className="input-field" type="number" value={form.frecuencia_cardiaca} onChange={e => setForm({ ...form, frecuencia_cardiaca: e.target.value })} placeholder="70" min="40" max="200" />
+                <input className="input-field" type="number" value={form.frecuencia_cardiaca}
+                  onChange={e => setForm(f => ({ ...f, frecuencia_cardiaca: e.target.value }))}
+                  placeholder="70" min="40" max="200" />
               </div>
             </div>
 
@@ -130,7 +137,7 @@ export default function Tension() {
               <div style={{ display: 'flex', gap: 8 }}>
                 {MOMENTOS.map(m => (
                   <button type="button" key={m}
-                    onClick={() => setForm(prev => ({ ...prev, momento: m }))}
+                    onClick={() => setForm(f => ({ ...f, momento: m }))}
                     style={{ flex: 1, padding: '10px 4px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s', border: `1.5px solid ${form.momento === m ? 'var(--teal-500)' : 'var(--slate-200)'}`, background: form.momento === m ? 'var(--teal-500)' : 'white', color: form.momento === m ? 'white' : 'var(--slate-600)' }}>
                     {m}
                   </button>
@@ -140,14 +147,18 @@ export default function Tension() {
 
             <div>
               <label style={{ fontSize: 12, color: 'var(--slate-400)', display: 'block', marginBottom: 5 }}>Centro / Hospital</label>
-              <HospitalSelector value={form.lugar} onChange={v => setForm({ ...form, lugar: v })} />
+              <HospitalSelector value={form.lugar} onChange={v => setForm(f => ({ ...f, lugar: v }))} />
             </div>
 
             <div>
               <label style={{ fontSize: 12, color: 'var(--slate-400)', display: 'block', marginBottom: 5 }}>Notas (opcional)</label>
-              <textarea className="input-field" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} placeholder="Ej: después de ejercicio, en reposo..." rows={2} style={{ resize: 'none' }} />
+              <textarea className="input-field" value={form.notas}
+                onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
+                placeholder="Ej: después de ejercicio, en reposo..." rows={2} style={{ resize: 'none' }} />
             </div>
-            <button className="btn-primary" type="submit" disabled={guardando}>{guardando ? 'Guardando...' : 'Guardar toma'}</button>
+            <button className="btn-primary" type="submit" disabled={guardando}>
+              {guardando ? 'Guardando...' : 'Guardar toma'}
+            </button>
           </form>
         )}
 
